@@ -27,6 +27,8 @@ export function Dashboard({ mode, product }: DashboardProps) {
   // state는 비동기로 갱신되므로 같은 틱의 중복 호출은 ref로 막는다.
   const inFlightRef = useRef(false);
   const nextIdRef = useRef(0);
+  // 서버 대화 기록을 묶는 세션 단위 ID. 새로고침 전까지 유지된다.
+  const [chatId] = useState(() => crypto.randomUUID());
 
   const nextId = () => `msg-${++nextIdRef.current}`;
 
@@ -52,7 +54,7 @@ export function Dashboard({ mode, product }: DashboardProps) {
     );
 
     try {
-      const res = await sendChat(question);
+      const res = await sendChat(question, chatId);
       setMessages((prev) => [
         ...prev,
         res.success
@@ -61,6 +63,7 @@ export function Dashboard({ mode, product }: DashboardProps) {
               role: "assistant",
               content: res.answer ?? "",
               sources: res.sources,
+              retrieval: res.retrieval,
             }
           : {
               id: nextId(),

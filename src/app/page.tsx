@@ -3,14 +3,13 @@ import { io } from "next/cache";
 import { Loader2 } from "lucide-react";
 import { Dashboard } from "@/components/dashboard/Dashboard";
 import { PRODUCT } from "@/config/product";
-import type { DataMode } from "@/lib/types";
+import { getDataMode } from "@/lib/data-access";
 
 // cacheComponents 환경에서는 `dynamic = 'force-dynamic'`을 쓸 수 없으므로,
 // io()로 정적 셸에서 제외해 USE_MOCK을 요청 시점에 읽는다.
 async function DashboardWithMode() {
   await io();
-  const mode: DataMode = process.env.USE_MOCK !== "false" ? "mock" : "real";
-  return <Dashboard mode={mode} product={PRODUCT} />;
+  return <Dashboard mode={getDataMode()} product={PRODUCT} />;
 }
 
 export default function Home() {

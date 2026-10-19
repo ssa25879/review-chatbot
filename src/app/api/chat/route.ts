@@ -1,59 +1,60 @@
-// 임시 스텁: 후속 변경(Mock RAG 파이프라인)에서 키워드 검색 + LLM 생성으로 교체한다.
-import type { ChatResponse, SourceReview } from "@/lib/types";
+// LLM 답변 생성은 API 키 확보 후 후속 변경에서 추가한다. 지금은 검색 결과 요약 템플릿으로 답변한다.
+import { NotImplementedError, getDataMode, saveMessage, searchReviews } from "@/lib/data-access";
+import { buildContext, buildSummaryAnswer } from "@/lib/rag-context";
+import type { ChatResponse } from "@/lib/types";
 
-const STUB_DELAY_MS = 800;
-
-const SAMPLE_SOURCES: SourceReview[] = [
-  {
-    id: "r003",
-    rating: 5,
-    title: "노이즈 캔슬링 대박",
-    content:
-      "독서실이랑 카페에서 공부할 때 쓰는데 에어컨 소리나 말소리 거의 완벽하게 차단해 줍니다. 집중력 완전 올라갔어요.",
-    author: "열공생",
-    score: 0.92,
-  },
-  {
-    id: "r002",
-    rating: 4,
-    title: "음질 좋지만 통화 품질은 아쉬워요",
-    content:
-      "음악 들을 때 저음 타격감이랑 해상력은 가격 대비 훌륭합니다. 다만 지하철에서 통화할 때 상대방이 제 목소리보다 주변 소음이 더 크게 들린다고 하네요.",
-    author: "사운드매니아",
-    score: 0.81,
-  },
-  {
-    id: "r039",
-    rating: 2,
-    title: "노이즈캔슬링 강도가 약합니다",
-    content:
-      "ANC 켜도 카페 말소리가 다 들립니다. 저가형 수준이에요. 기대가 컸나 봅니다.",
-    author: "깐깐이",
-    score: 0.74,
-  },
-];
+const TOP_K = 5;
 
 export async function POST(request: Request) {
-  let question = "";
+  const mode = getDataMode();
+
+  let query = "";
+  let chatId: string | undefined;
   try {
-    const body = (await request.json()) as { question?: unknown };
-    if (typeof body.question === "string") question = body.question.trim();
+    const body = (await request.json()) as { query?: unknown; chatId?: unknown };
+    if (typeof body.query === "string") query = body.query.trim();
+    if (typeof body.chatId === "string" && body.chatId) chatId = body.chatId;
   } catch {
     // 잘못된 JSON 본문은 빈 질문으로 처리
   }
 
-  if (!question) {
+  if (!query) {
     return Response.json(
-      { success: false, error: "질문을 입력해 주세요." } satisfies ChatResponse,
+      { success: false, mode, error: "질문을 입력해 주세요." } satisfies ChatResponse,
       { status: 400 },
     );
   }
 
-  await new Promise((resolve) => setTimeout(resolve, STUB_DELAY_MS));
+  try {
+    const sources = await searchReviews(query, TOP_K);
+    const answer = buildSummaryAnswer(query, sources);
+    const retrieval = { query, chatId: chatId ?? null, context: buildContext(sources) };
 
-  return Response.json({
-    success: true,
-    answer: `(임시 응답) "${question}"에 대한 리뷰 분석 기능은 준비 중입니다. 아래는 예시 참고 리뷰입니다.`,
-    sources: SAMPLE_SOURCES,
-  } satisfies ChatResponse);
+    await saveMessage(chatId, { role: "user", content: query });
+    await saveMessage(chatId, { role: "assistant", content: answer });
+
+    return Response.json({
+      success: true,
+      mode,
+      answer,
+      sources,
+      retrieval,
+    } satisfies ChatResponse);
+  } catch (error) {
+    if (error instanceof NotImplementedError) {
+      return Response.json(
+        { success: false, mode, error: error.message } satisfies ChatResponse,
+        { status: 501 },
+      );
+    }
+    console.error("[chat] 응답 생성 실패:", error);
+    return Response.json(
+      {
+        success: false,
+        mode,
+        error: "답변을 생성하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+      } satisfies ChatResponse,
+      { status: 500 },
+    );
+  }
 }

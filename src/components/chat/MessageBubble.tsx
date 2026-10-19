@@ -1,4 +1,5 @@
 import { AlertCircle, Bot, User } from "lucide-react";
+import { RetrievalJson } from "./RetrievalJson";
 import { SourceReviews } from "./SourceReviews";
 import type { ChatMessage } from "@/lib/types";
 
@@ -39,6 +40,12 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
         )}
         {message.sources && message.sources.length > 0 && (
           <SourceReviews sources={message.sources} />
+        )}
+        {message.retrieval && (
+          <RetrievalJson
+            retrieval={message.retrieval}
+            sources={message.sources ?? []}
+          />
         )}
       </div>
     </div>

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { AlertCircle, CheckCircle2, DatabaseZap, Loader2 } from "lucide-react";
-import { ingestSamples } from "@/lib/api-client";
+import { indexSamples } from "@/lib/api-client";
 
 type IngestState =
   | { status: "idle" }
@@ -17,10 +17,10 @@ export function IngestButton() {
   const handleClick = async () => {
     if (isLoading) return;
     setState({ status: "loading" });
-    const res = await ingestSamples();
+    const res = await indexSamples();
     setState(
       res.success && res.data
-        ? { status: "success", count: res.data.count }
+        ? { status: "success", count: res.data.indexed }
         : { status: "error", error: res.error ?? "인덱싱에 실패했습니다." },
     );
   };

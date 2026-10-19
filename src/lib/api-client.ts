@@ -1,4 +1,4 @@
-import type { ApiResponse, ChatResponse, IngestResult } from "./types";
+import type { ApiResponse, ChatResponse, IndexResult } from "./types";
 
 const NETWORK_ERROR = "서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.";
 
@@ -43,10 +43,10 @@ async function postJson<T extends { success: boolean; error?: string }>(
   return parsed as T;
 }
 
-export function sendChat(question: string): Promise<ChatResponse> {
-  return postJson<ChatResponse>("/api/chat", { question });
+export function sendChat(query: string, chatId: string): Promise<ChatResponse> {
+  return postJson<ChatResponse>("/api/chat", { query, chatId });
 }
 
-export function ingestSamples(): Promise<ApiResponse<IngestResult>> {
-  return postJson<ApiResponse<IngestResult>>("/api/ingest");
+export function indexSamples(): Promise<ApiResponse<IndexResult>> {
+  return postJson<ApiResponse<IndexResult>>("/api/index-data");
 }
