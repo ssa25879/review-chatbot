@@ -1,28 +1,16 @@
 // Mock 모드 데이터 저장소: samples/review.csv를 서버 메모리에 캐싱하고 키워드 검색과 대화 기록을 제공한다.
-import { promises as fs } from "fs";
-import path from "path";
-import Papa from "papaparse";
+import { readReviewCsv } from "./review-csv";
+import type { Review } from "./review-csv";
 import type { SourceReview } from "./types";
-
-export interface Review {
-  id: string;
-  rating: number;
-  title: string;
-  content: string;
-  author: string;
-  date: string;
-  helpful_votes: number;
-}
 
 export interface StoredMessage {
   role: "user" | "assistant";
   content: string;
+  /** assistant 답변의 근거 리뷰 */
+  sources?: SourceReview[];
   createdAt: string;
 }
 
-type RawRow = Record<keyof Review, string>;
-
-const CSV_PATH = path.join(process.cwd(), "samples", "review.csv");
 const DEFAULT_CHAT_ID = "default";
 const MIN_SCORE = 0.65;
 const MAX_SCORE = 0.98;
@@ -40,28 +28,10 @@ const store = globalThis as typeof globalThis & {
   __mockMessages?: Map<string, StoredMessage[]>;
 };
 
-async function readReviews(): Promise<Review[]> {
-  const text = await fs.readFile(CSV_PATH, "utf8");
-  const parsed = Papa.parse<RawRow>(text, { header: true, skipEmptyLines: true });
-  if (parsed.errors.length > 0) {
-    const first = parsed.errors[0];
-    throw new Error(`review.csv 파싱 실패 (row ${first.row}): ${first.message}`);
-  }
-  return parsed.data.map((row) => ({
-    id: row.id,
-    rating: Number(row.rating),
-    title: row.title,
-    content: row.content,
-    author: row.author,
-    date: row.date,
-    helpful_votes: Number(row.helpful_votes) || 0,
-  }));
-}
-
 /** 캐시된 리뷰를 반환하고, 없으면 CSV를 읽어 적재한다. 실패 시 다음 호출에서 재시도한다. */
 function loadReviews(): Promise<Review[]> {
   if (!store.__mockReviews) {
-    store.__mockReviews = readReviews().catch((error) => {
+    store.__mockReviews = readReviewCsv().catch((error) => {
       store.__mockReviews = undefined;
       throw error;
     });

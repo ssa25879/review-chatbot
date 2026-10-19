@@ -11,6 +11,10 @@
   "dependencies": {
     "@langchain/anthropic": "^1.5.12",
     "@langchain/core": "^1.2.18",
+    "@langchain/google-genai": "^2.3.2",
+    "@pinecone-database/pinecone": "^9.0.0",
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.118.0",
     "lucide-react": "^1.59.0",
     "next": "16.4.2",
     "papaparse": "^5.7.0",

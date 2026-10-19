@@ -1,4 +1,5 @@
-import { NotImplementedError, getDataMode, indexReviews } from "@/lib/data-access";
+import { getDataMode, indexReviews } from "@/lib/data-access";
+import { ConfigError } from "@/lib/env";
 import type { ApiResponse, IndexResult } from "@/lib/types";
 
 export async function POST() {
@@ -11,10 +12,10 @@ export async function POST() {
       data: { indexed },
     } satisfies ApiResponse<IndexResult>);
   } catch (error) {
-    if (error instanceof NotImplementedError) {
+    if (error instanceof ConfigError) {
       return Response.json(
         { success: false, mode, error: error.message } satisfies ApiResponse,
-        { status: 501 },
+        { status: 500 },
       );
     }
     console.error("[index-data] 인덱싱 실패:", error);
