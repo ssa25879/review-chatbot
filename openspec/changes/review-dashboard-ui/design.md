@@ -49,7 +49,9 @@ src/app/api/ingest/route.ts       스텁
 - `draft`를 `Dashboard`에서 제어 컴포넌트로 관리하고 `ChatInput`에 `inputRef`를 전달해 외부에서 포커스 이동.
 
 ### 2. 데이터 모드 판별: Server Component props
-`page.tsx`(Server Component)에서 `process.env.USE_MOCK !== 'false' ? 'mock' : 'real'`을 계산해 props로 전달한다. `USE_MOCK`은 `NEXT_PUBLIC_` 접두사가 없어 클라이언트에서 읽을 수 없고, 별도 `/api/status` 호출은 첫 렌더 깜빡임과 추가 요청이 생긴다. 환경변수 변경을 런타임에 반영하기 위해 페이지는 동적 렌더링(`export const dynamic = 'force-dynamic'` 또는 이 버전의 동등 수단 — 문서 확인)으로 둔다.
+`page.tsx`(Server Component)에서 `process.env.USE_MOCK !== 'false' ? 'mock' : 'real'`을 계산해 props로 전달한다. `USE_MOCK`은 `NEXT_PUBLIC_` 접두사가 없어 클라이언트에서 읽을 수 없고, 별도 `/api/status` 호출은 첫 렌더 깜빡임과 추가 요청이 생긴다. 환경변수 변경을 런타임에 반영하기 위해 모드 판별은 요청 시점에 수행한다.
+
+> **번들 문서 확인 결과 (Next.js 16.4.2, 태스크 1.1)**: 이 프로젝트는 `next.config.ts`에서 `cacheComponents: true`를 사용한다. 이 경우 Route Segment Config의 `dynamic`(`force-dynamic`)·`revalidate`·`fetchCache`는 **제거**되어 사용할 수 없다(`03-file-conventions/02-route-segment-config/index.md`). 대신 `next/cache`의 `io()`(v16.3+)를 `await`한 뒤 `process.env.USE_MOCK`을 읽는 비동기 Server Component를 `<Suspense>`로 감싸, 해당 부분만 정적 셸에서 제외하고 요청 시점에 렌더링한다(`04-functions/io.md`, `01-getting-started/08-caching.md` — Suspense 없이 요청 시점 데이터를 읽으면 blocking-route 경고). `connection()`도 가능하지만 문서가 `io()`를 권장한다. Route Handler의 `POST`는 캐시되지 않으므로 별도 설정이 필요 없다(`15-route-handlers.md`). Server→Client props는 직렬화 가능해야 하므로 `mode`(문자열)와 상품 상수(plain object)만 전달한다.
 
 ### 3. IME 방어
 `ChatInput`의 `onKeyDown`:
