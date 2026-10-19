@@ -2,7 +2,8 @@
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { StringOutputParser } from "@langchain/core/output_parsers";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
-import { requireEnv } from "@/lib/env";
+import { ChatOllama } from "@langchain/ollama";
+import { ConfigError, requireEnv } from "@/lib/env";
 
 // 채팅 버블은 텍스트를 그대로 표시하므로 마크다운 서식을 쓰지 않도록 지시한다.
 const SYSTEM_PROMPT = `당신은 전자제품 쇼핑몰의 전문 리뷰 분석가입니다.
@@ -17,13 +18,29 @@ const prompt = ChatPromptTemplate.fromMessages([
   ["human", "{query}"],
 ]);
 
-/** Claude로 전환할 때는 이 함수만 ChatAnthropic({ model: "claude-haiku-4-5", ... })로 교체한다. */
+/**
+ * LLM_PROVIDER로 답변 생성 모델을 고른다. 미설정이면 Gemini, `ollama`면 로컬 Ollama.
+ * Claude로 전환할 때는 이 함수에 ChatAnthropic({ model: "claude-haiku-4-5", ... }) 분기를 추가한다.
+ */
 function createChatModel() {
-  return new ChatGoogleGenerativeAI({
-    // 응답 지연이 짧은 lite 모델을 버전 고정으로 사용한다. (gemini-2.5-flash는 신규 사용자에게 404)
-    model: "gemini-3.5-flash-lite",
-    apiKey: requireEnv("GEMINI_API_KEY"),
-  });
+  const provider = process.env.LLM_PROVIDER || "gemini";
+  if (provider === "gemini") {
+    return new ChatGoogleGenerativeAI({
+      // 응답 지연이 짧은 lite 모델을 버전 고정으로 사용한다. (gemini-2.5-flash는 신규 사용자에게 404)
+      model: "gemini-3.5-flash-lite",
+      apiKey: requireEnv("GEMINI_API_KEY"),
+    });
+  }
+  if (provider === "ollama") {
+    // 로컬 테스트 전용. 배포 환경에서는 localhost Ollama에 접근할 수 없다.
+    return new ChatOllama({
+      model: requireEnv("OLLAMA_MODEL"),
+      baseUrl: process.env.OLLAMA_BASE_URL || "http://localhost:11434",
+      // 첫 호출의 모델 로드(수 분)를 반복하지 않도록 마지막 호출 후 30분간 메모리에 유지한다.
+      keepAlive: "30m",
+    });
+  }
+  throw new ConfigError("LLM_PROVIDER 값이 올바르지 않습니다. gemini 또는 ollama 중 하나로 설정하세요.");
 }
 
 /** 지시를 어기고 섞여 나온 마크다운 서식 기호를 제거한다. 문장 내용은 바꾸지 않는다. */
