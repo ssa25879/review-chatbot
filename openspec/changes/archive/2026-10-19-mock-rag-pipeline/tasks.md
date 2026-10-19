@@ -29,13 +29,13 @@
 ## 6. UI 연결
 
 - [x] 6.1 `src/lib/types.ts`(`SourceReview.date`, `mode?`, `IndexResult { indexed }`)와 `src/lib/api-client.ts`(`sendChat(query, chatId)` → `/api/chat`, `indexSamples()` → `/api/index-data`)를 갱신하고 `npx tsc --noEmit` 통과 확인
-- [ ] 6.2 `IngestButton.tsx`가 `indexSamples()`와 `data.indexed`를 사용하고, `Dashboard.tsx`가 `useState(() => crypto.randomUUID())`로 세션 `chatId`를 만들어 `sendChat`에 넘기도록 수정한 뒤, 브라우저에서 [샘플 데이터 인덱싱] 클릭 시 "100건 인덱싱 완료" 표시와 Network 탭에서 연속 질문 두 건의 `chatId`가 같은지 확인
+- [x] 6.2 `IngestButton.tsx`가 `indexSamples()`와 `data.indexed`를 사용하고, `Dashboard.tsx`가 `useState(() => crypto.randomUUID())`로 세션 `chatId`를 만들어 `sendChat`에 넘기도록 수정한 뒤, 브라우저에서 [샘플 데이터 인덱싱] 클릭 시 "100건 인덱싱 완료" 표시와 Network 탭에서 연속 질문 두 건의 `chatId`가 같은지 확인
 - [x] 6.3 `ChatResponse.retrieval`/assistant 메시지 `retrieval` 타입을 추가하고, `SourceReviews`와 같은 접이식 스타일의 `src/components/chat/RetrievalJson.tsx`("검색 결과 JSON", `{ ...retrieval, sources }`를 `<pre>`에 들여쓰기 출력, 최대 높이 내부 스크롤)를 만들어 `MessageBubble`에서 참고 리뷰 아래에 렌더링하고 `Dashboard`가 응답의 `retrieval`을 메시지에 저장하도록 수정한 뒤 `npx tsc --noEmit`·`npm run lint` 통과 확인
 
 ## 7. 통합 검증
 
 - [x] 7.1 `npm run lint`와 `npm run build`가 통과하는지 확인
-- [ ] 7.2 `npm run dev`에서 한글 질문(예: "배터리 수명은 어때?")을 Enter로 전송해 요청 1회·AI 버블에 요약 답변·참고 리뷰 카드(별점·작성자·관련도)·펼칠 수 있는 "검색 결과 JSON" 섹션(query·chatId·context·sources)이 표시되는지 확인
+- [x] 7.2 `npm run dev`에서 한글 질문(예: "배터리 수명은 어때?")을 Enter로 전송해 요청 1회·AI 버블에 요약 답변·참고 리뷰 카드(별점·작성자·관련도)·펼칠 수 있는 "검색 결과 JSON" 섹션(query·chatId·context·sources)이 표시되는지 확인
 
 ## Workflow follow-up
 
