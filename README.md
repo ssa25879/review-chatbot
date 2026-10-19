@@ -28,6 +28,26 @@ http://localhost:3000 에서 [샘플 데이터 인덱싱]을 누른 뒤 질문�
 
 필요한 환경변수가 비어 있으면 API가 어떤 변수가 빠졌는지 알려주는 오류를 반환합니다.
 
+### 로컬 LLM으로 테스트 (Ollama)
+
+Gemini 대신 로컬 [Ollama](https://ollama.com/) 모델로 답변을 생성할 수 있습니다. 검색(Pinecone)과 저장(Supabase)은 그대로 사용합니다.
+
+```bash
+ollama pull gemma4:e2b
+```
+
+```
+# .env.local
+USE_MOCK=false
+LLM_PROVIDER=ollama
+OLLAMA_MODEL=gemma4:e2b
+# OLLAMA_BASE_URL=http://localhost:11434   (기본값)
+```
+
+- 첫 질문은 모델을 메모리에 올리느라 1~2분 걸릴 수 있습니다. 이후 30분간 모델이 유지되어 수 초 안에 답합니다. 미리 `ollama run gemma4:e2b`로 띄워 두면 첫 대기를 줄일 수 있습니다.
+- 작은 모델은 Gemini보다 지시 이행(작성자 인용 등)이 약할 수 있습니다.
+- 로컬 개발 전용입니다. 배포 환경에서는 `LLM_PROVIDER`를 설정하지 마세요.
+
 ### 보안 참고
 
 서버는 Supabase **공개(publishable) 키**로 접근하며, SQL 파일의 RLS 정책은 `reviews` 조회·추가·수정과 `messages` 추가만 허용합니다. 공개 키는 브라우저에 노출될 수 있으므로 외부에 배포한다면 서버 전용 secret 키로 바꾸고 공개 키의 쓰기 정책을 제거하세요.
